@@ -31,9 +31,9 @@ RUN cd /work && rm -rf LuaJIT-2.1.0-beta3 && rm LuaJIT-2.1.0-beta3.tar.gz
 RUN cd /work && wget https://sourceforge.net/projects/pcre/files/pcre/8.45/pcre-8.45.tar.gz 
 RUN cd /work && tar -xvf pcre-8.45.tar.gz && cd pcre-8.45 && ./configure && make && make install 
 RUN cd /work && rm -rf pcre-8.45 && rm pcre-8.45.tar.gz 
-RUN cd /work && wget http://www.zlib.net/zlib-1.2.11.tar.gz 
-RUN cd /work && tar -xvf zlib-1.2.11.tar.gz && cd zlib-1.2.11 && ./configure && make && make install 
-RUN cd /work && rm -rf zlib-1.2.11 && rm zlib-1.2.11.tar.gz 
+RUN cd /work && wget http://www.zlib.net/zlib-1.2.12.tar.gz 
+RUN cd /work && tar -xvf zlib-1.2.12.tar.gz && cd zlib-1.2.12 && ./configure && make && make install 
+RUN cd /work && rm -rf zlib-1.2.12 && rm zlib-1.2.12.tar.gz 
 COPY daq_gwlb.zip /work/daq_gwlb.zip 
 RUN cd /work && unzip daq_gwlb.zip && cd daq_gwlb-master && make && cp daq_gwlb.so /usr/local/lib/daq/. 
 RUN cd /work && git clone https://github.com/snort3/snort3.git snort3_latest
