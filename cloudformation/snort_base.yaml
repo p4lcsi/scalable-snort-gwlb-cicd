@@ -3,7 +3,7 @@ Description: Pipeline Automation Template
 
 Parameters:
   GitRepo:
-    Default: https://github.com/snort3/snort3.git
+    Default: https://github.com/p4lcsi/scalable-snort-gwlb-cicd.git
     Type: String
 
   VpcName:
@@ -314,10 +314,17 @@ Resources:
                   - !Sub ${SnortBucket.Arn}/*
 
 
-  SuricataImageUriParameter:
+  SnortImageUriParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub /${AWS::StackName}/codebuild/container/suricata/uri
+      Name: !Sub /${AWS::StackName}/codebuild/container/snort/uri
+      Type:  String
+      Value: " "
+  
+  SnortMd5sumParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/codebuild/container/snort/md5sum
       Type:  String
       Value: " "
 
@@ -338,10 +345,10 @@ Resources:
             Value: !Ref AWS::Region
           - Name: MD5SUM_SSM_PARAMETER
             Type: PLAINTEXT
-            Value: !Sub /${AWS::StackName}/codebuild/container/suricata/md5sum
+            Value: !Sub /${AWS::StackName}/codebuild/container/snort/md5sum
           - Name: CONTAINERURI_SSM_PARAMETER
             Type: PLAINTEXT
-            Value: !Sub /${AWS::StackName}/codebuild/container/suricata/uri
+            Value: !Sub /${AWS::StackName}/codebuild/container/snort/uri
           - Name: AWS_ACCOUNT_ID
             Type: PLAINTEXT
             Value: !Ref AWS::AccountId
@@ -355,45 +362,7 @@ Resources:
       ServiceRole: !GetAtt CPipelineCodeBuildRole.Arn
       Source: 
         Type: CODEPIPELINE
-        BuildSpec: Dockerfiles/suricata/buildspec.yml
-
-  
- 
- RulesFetcherBuildProject:
-    Type: AWS::CodeBuild::Project
-    Properties: 
-      Artifacts: 
-        Type: CODEPIPELINE
-      Environment: 
-        Type: LINUX_CONTAINER
-        Image: aws/codebuild/standard:4.0
-        ComputeType: BUILD_GENERAL1_SMALL
-        PrivilegedMode: true
-        ImagePullCredentialsType: CODEBUILD
-        EnvironmentVariables:
-          - Name: AWS_REGION
-            Type: PLAINTEXT
-            Value: !Ref AWS::Region
-          - Name: MD5SUM_SSM_PARAMETER
-            Type: PLAINTEXT
-            Value: !Sub /${AWS::StackName}/codebuild/container/rulesFetcher/md5sum
-          - Name: CONTAINERURI_SSM_PARAMETER
-            Type: PLAINTEXT
-            Value: !Sub /${AWS::StackName}/codebuild/container/rulesFetcher/uri
-          - Name: AWS_ACCOUNT_ID
-            Type: PLAINTEXT
-            Value: !Ref AWS::AccountId
-          - Name: IMAGE_REPO_NAME
-            Type: PLAINTEXT
-            Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${RulesFetcherEcrRepo}
-      LogsConfig: 
-        CloudWatchLogs:
-          Status: ENABLED
-          GroupName: codebuild
-      ServiceRole: !GetAtt CPipelineCodeBuildRole.Arn
-      Source: 
-        Type: CODEPIPELINE
-        BuildSpec: Dockerfiles/rulesFetcher/buildspec.yml
+        BuildSpec: Dockerfiles/snort/buildspec.yml
 
   CPipeline:
     Type: AWS::CodePipeline::Pipeline
@@ -424,7 +393,7 @@ Resources:
             RunOrder: 1
       - Name: BuildStage
         Actions:
-          - Name: BuildSuricataContainer
+          - Name: Snort
             ActionTypeId:
               Category: Build
               Owner: AWS
@@ -434,20 +403,8 @@ Resources:
               ProjectName: !Ref SnortBuildProject
             InputArtifacts:
               - Name: SourceArtifact
-            Namespace: SuricataBuild
+            Namespace: SnortBuild
             RunOrder: !If [PipelineActionParallel, 1, 2]
-          - Name: BuildRulesFetcherContainer
-            ActionTypeId:
-              Category: Build
-              Owner: AWS
-              Provider: CodeBuild
-              Version: '1'
-            Configuration:
-              ProjectName: !Ref RulesFetcherBuildProject
-            InputArtifacts:
-              - Name: SourceArtifact
-            Namespace: RulesFetcherBuild
-            RunOrder: !If [PipelineActionParallel, 1, 3]
           - Name: CopyToS3
             ActionTypeId:
               Category: Deploy
@@ -461,48 +418,7 @@ Resources:
               Extract: true
               ObjectKey: deployment
             RunOrder: !If [PipelineActionParallel, 1, 1] 
-      - Name: DeployApplicationStage
-        Actions:
-          - Name: CreateChangeSet
-            ActionTypeId:
-              Category: Deploy
-              Owner: AWS
-              Provider: CloudFormation
-              Version: '1'
-            InputArtifacts:
-              - Name: SourceArtifact
-            Configuration:
-              ActionMode: CHANGE_SET_REPLACE
-              Capabilities: CAPABILITY_IAM
-              RoleArn: !GetAtt CPipelineCloudFormationRole.Arn
-              StackName: !Sub ${AWS::StackName}-suricata-cluster
-              ChangeSetName: !Sub ${AWS::StackName}-suricata-cluster-cset
-              TemplatePath: SourceArtifact::cloudformation/suricata/cluster.yaml
-              TemplateConfiguration: SourceArtifact::cloudformation/suricata/cluster-template-configuration.json
-              ParameterOverrides: !Sub |
-                {
-                  "VpcId": "${VPC}",
-                  "VpcCidr": "${VpcCidr}",
-                  "PrivateSubnet1": "${PrivateSubnet1}",
-                  "PrivateSubnet2": "${PrivateSubnet2}",
-                  "PrivateSubnet3": "${PrivateSubnet3}",
-                  "DynamicRulesS3Path": "${SnortBucket}/deployment/dynamic.rules",
-                  "SuricataImage": "#{SuricataBuild.image}",
-                  "RulesFetcherImage": "#{RulesFetcherBuild.image}"
-                }
-            RunOrder: 1
-          - Name: ExecuteChangeSet
-            ActionTypeId:
-              Category: Deploy
-              Owner: AWS
-              Provider: CloudFormation
-              Version: '1'
-            Configuration:
-              ActionMode: CHANGE_SET_EXECUTE
-              ChangeSetName: !Sub ${AWS::StackName}-suricata-cluster-cset
-              RoleArn: !GetAtt CPipelineCloudFormationRole.Arn
-              StackName: !Sub ${AWS::StackName}-suricata-cluster
-            RunOrder: 2
+
 
   CPipelineCloudWatchEventRole:
       Type: AWS::IAM::Role
