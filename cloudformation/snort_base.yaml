@@ -3,7 +3,7 @@ Description: Pipeline Automation Template
 
 Parameters:
   GitRepo:
-    Default: https://github.com/aws-samples/aws-gateway-load-balancer-suricata-ids-ips-nsm.git
+    Default: https://github.com/snort3/snort3.git
     Type: String
 
   VpcName:
@@ -70,20 +70,16 @@ Conditions:
 Resources:
   # Pipeline #
 
-  SuricataEcrRepo:
+  SnortEcrRepo:
     Type: AWS::ECR::Repository
     DeletionPolicy: Retain
 
-  RulesFetcherEcrRepo:
-    Type: AWS::ECR::Repository
-    DeletionPolicy: Retain
-
-  SuricataBucket:
+  SnortBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     Properties: 
       BucketName: !Sub 
-        - suricata-codepipeline-${AWS::Region}-${AWS::AccountId}-${RandomizedValue}
+        - snort-cicd-${AWS::Region}-${AWS::AccountId}-${RandomizedValue}
         - RandomizedValue:
             Fn::Select: [0, Fn::Split: [-, Fn::Select: [2, Fn::Split: [/, !Ref AWS::StackId ]]]] # Takes the first part of the random GUID in the cloudformation stacks arn.
       AccessControl: Private
@@ -111,7 +107,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - s3:PutObject
-                Resource: !Sub ${SuricataBucket.Arn}/cloneFromGithub/*
+                Resource: !Sub ${SnortBucket.Arn}/cloneFromGithub/*
           PolicyName: PutS3Object
 
   GitRepoToCodeCommitLambda:
@@ -127,10 +123,12 @@ Resources:
           import cfnresponse
           s3 = boto3.client('s3')
           logger = logging.getLogger()
-          logger.setLevel(logging.INFO)
+          logger.setLevel(logging.DEBUG)
           repo = os.environ['GitRepo']
           s3Bucket = os.environ['s3Bucket']
-          path = '/tmp/repo' 
+          parent_dir = '/tmp' 
+          directory = 'snortrepo'
+          path = os.path.join(parent_dir, directory)
           s3ObjectName = 'ipsautomation'
           s3ObjectExtension = 'zip'
           s3ObjectFullName = s3ObjectName + '.' + s3ObjectExtension
@@ -162,9 +160,10 @@ Resources:
       Environment: 
         Variables:
           GitRepo: !Ref GitRepo
-          s3Bucket: !Ref SuricataBucket
+          s3Bucket: !Ref SnortBucket
       Handler: index.lambda_handler
       Runtime: python3.8
+      Timeout: 900
       Layers: 
         - !Sub arn:aws:lambda:${AWS::Region}:553035198032:layer:git-lambda2:8 # https://github.com/lambci/git-lambda-layer
       MemorySize: 1024
@@ -177,7 +176,7 @@ Resources:
     Properties:
       Code: 
         S3:
-          Bucket: !Ref SuricataBucket
+          Bucket: !Ref SnortBucket
           Key: cloneFromGithub/ipsautomation.zip
       RepositoryDescription: Repository for holding IPS solution Automation Code
       RepositoryName: !Sub ${AWS::StackName}-repository
@@ -233,8 +232,7 @@ Resources:
                     - codebuild:StartBuild
                     - codebuild:BatchGetBuilds
                   Resource: 
-                    - !GetAtt SuricataBuildProject.Arn
-                    - !GetAtt RulesFetcherBuildProject.Arn
+                    - !GetAtt SnortBuildProject.Arn
                 - Effect: Allow
                   Action:
                     - cloudformation:CreateStack
@@ -257,8 +255,8 @@ Resources:
                   Action:
                     - s3:*
                   Resource: 
-                    - !Sub ${SuricataBucket.Arn}
-                    - !Sub ${SuricataBucket.Arn}/*
+                    - !Sub ${SnortBucket.Arn}
+                    - !Sub ${SnortBucket.Arn}/*
 
   CPipelineCodeBuildRole:
     Type: AWS::IAM::Role
@@ -294,8 +292,7 @@ Resources:
                   - ecr:BatchGetImage 
                   - ecr:GetDownloadUrlForLayer
                 Resource:
-                  - !Sub ${SuricataEcrRepo.Arn}
-                  - !Sub ${RulesFetcherEcrRepo.Arn}
+                  - !Sub ${SnortEcrRepo.Arn}
               - Effect: Allow
                 Action:
                   - ecr:GetAuthorizationToken
@@ -313,15 +310,9 @@ Resources:
                   - s3:GetBucketAcl
                   - s3:GetBucketLocation
                 Resource:
-                  - !Sub ${SuricataBucket.Arn}
-                  - !Sub ${SuricataBucket.Arn}/*
+                  - !Sub ${SnortBucket.Arn}
+                  - !Sub ${SnortBucket.Arn}/*
 
-  SuricataMd5sumParameter:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: !Sub /${AWS::StackName}/codebuild/container/suricata/md5sum
-      Type:  String
-      Value: " "
 
   SuricataImageUriParameter:
     Type: AWS::SSM::Parameter
@@ -330,21 +321,7 @@ Resources:
       Type:  String
       Value: " "
 
-  RulesFetcherMd5sumParameter:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: !Sub /${AWS::StackName}/codebuild/container/rulesFetcher/md5sum
-      Type:  String
-      Value: " "
-
-  RulesFetcherImageUriParameter:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: !Sub /${AWS::StackName}/codebuild/container/rulesFetcher/uri
-      Type:  String
-      Value: " "
-
-  SuricataBuildProject:
+  SnortBuildProject:
     Type: AWS::CodeBuild::Project
     Properties: 
       Artifacts: 
@@ -370,7 +347,7 @@ Resources:
             Value: !Ref AWS::AccountId
           - Name: IMAGE_REPO_NAME
             Type: PLAINTEXT
-            Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${SuricataEcrRepo}
+            Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${SnortEcrRepo}
       LogsConfig: 
         CloudWatchLogs:
           Status: ENABLED
@@ -380,7 +357,9 @@ Resources:
         Type: CODEPIPELINE
         BuildSpec: Dockerfiles/suricata/buildspec.yml
 
-  RulesFetcherBuildProject:
+  
+ 
+ RulesFetcherBuildProject:
     Type: AWS::CodeBuild::Project
     Properties: 
       Artifacts: 
@@ -421,7 +400,7 @@ Resources:
     Properties: 
       ArtifactStore: 
         Type: S3 
-        Location: !Ref SuricataBucket
+        Location: !Ref SnortBucket
       DisableInboundStageTransitions:
         - Reason: "Disabling to permit code changes to internal stack before initial deployment"
           StageName: BuildStage
@@ -452,7 +431,7 @@ Resources:
               Provider: CodeBuild
               Version: '1'
             Configuration:
-              ProjectName: !Ref SuricataBuildProject
+              ProjectName: !Ref SnortBuildProject
             InputArtifacts:
               - Name: SourceArtifact
             Namespace: SuricataBuild
@@ -478,7 +457,7 @@ Resources:
             InputArtifacts:
               - Name: SourceArtifact
             Configuration:
-              BucketName: !Ref SuricataBucket
+              BucketName: !Ref SnortBucket
               Extract: true
               ObjectKey: deployment
             RunOrder: !If [PipelineActionParallel, 1, 1] 
@@ -507,7 +486,7 @@ Resources:
                   "PrivateSubnet1": "${PrivateSubnet1}",
                   "PrivateSubnet2": "${PrivateSubnet2}",
                   "PrivateSubnet3": "${PrivateSubnet3}",
-                  "DynamicRulesS3Path": "${SuricataBucket}/deployment/dynamic.rules",
+                  "DynamicRulesS3Path": "${SnortBucket}/deployment/dynamic.rules",
                   "SuricataImage": "#{SuricataBuild.image}",
                   "RulesFetcherImage": "#{RulesFetcherBuild.image}"
                 }
@@ -761,3 +740,4 @@ Resources:
     Properties:
       RouteTableId: !Ref PrivateSubnet3RouteTable
       SubnetId: !Ref PrivateSubnet3
+ 
