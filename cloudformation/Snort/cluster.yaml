@@ -160,7 +160,7 @@ Resources:
     DeletionPolicy: Retain
     Properties:
       BucketName: !Sub 
-        - Snort-pcapfiles-${AWS::Region}-${AWS::AccountId}-${RandomizedValue}
+        - snort-pcapfiles-${AWS::Region}-${AWS::AccountId}-${RandomizedValue}
         - RandomizedValue:
             Fn::Select: [0, Fn::Split: [-, Fn::Select: [2, Fn::Split: [/, !Ref AWS::StackId ]]]] # Takes the first part of the random GUID in the cloudformation stacks arn.
       LifecycleConfiguration:
