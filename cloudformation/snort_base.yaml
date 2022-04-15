@@ -370,9 +370,6 @@ Resources:
       ArtifactStore: 
         Type: S3 
         Location: !Ref SnortBucket
-      DisableInboundStageTransitions:
-        - Reason: "Disabling to permit code changes to internal stack before initial deployment"
-          StageName: BuildStage
       Name: !Sub ${AWS::StackName}-pipeline
       RoleArn: !GetAtt CPipelineServiceRole.Arn
       Stages:
