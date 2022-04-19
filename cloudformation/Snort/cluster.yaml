@@ -149,11 +149,11 @@ Resources:
   #   Properties: 
   #     LogGroupName: !Sub /${AWS::StackName}/Snort/tcp-data
   #     RetentionInDays: !Ref DefaultLogRententionCloudWatch
-  SnortHttpDataLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties: 
-      LogGroupName: !Sub /${AWS::StackName}/Snort/http-data
-      RetentionInDays: !Ref DefaultLogRententionCloudWatch
+  #SnortHttpDataLogGroup:
+  #  Type: AWS::Logs::LogGroup
+  #  Properties: 
+  #    LogGroupName: !Sub /${AWS::StackName}/Snort/http-data
+  #    RetentionInDays: !Ref DefaultLogRententionCloudWatch
           
   SnortPcapBucket:
     Type: AWS::S3::Bucket
@@ -274,7 +274,7 @@ Resources:
       NetworkMode: host
       Volumes:
         - Host: 
-            SourcePath: /var/log/Snort/
+            SourcePath: /var/log/snort/
           Name: SnortLogs
       RequiresCompatibilities: 
         - EC2
@@ -299,7 +299,7 @@ Resources:
               - NET_ADMIN
               - SYS_NICE
           MountPoints:
-            - ContainerPath: /var/log/Snort
+            - ContainerPath: /var/log/snort
               SourceVolume: SnortLogs
           # VolumesFrom:
           #   - SourceContainer: RulesFetcher
@@ -559,16 +559,16 @@ Resources:
           #####################
           mkdir -p /mnt/efs/
           mount -t efs -o tls ${SnortLogsEfs}:/ /mnt/efs/
-          mkdir -p /mnt/efs/$instance_id/Snort
+          mkdir -p /mnt/efs/$instance_id/snort
 
-          ln -s /mnt/efs/$instance_id/Snort /var/log/
-          chown 1000 /var/log/Snort/ #Make the Snort user the owner of the log folder.
+          ln -s /mnt/efs/$instance_id/snort /var/log/
+          chown 1000 /var/log/snort/ #Make the Snort user the owner of the log folder.
 
           ###########################
           # LOGROTATE CONFIGURATION #
           ###########################
-          cat > /etc/logrotate.d/Snort << 'EOF'
-          /var/log/Snort/*.log /var/log/Snort/eve.json {
+          cat > /etc/logrotate.d/snort << 'EOF'
+          /var/log/snort/*.log /var/log/snort/eve.json {
           rotate 2
           daily
           size 200M
@@ -576,13 +576,13 @@ Resources:
           missingok
           nocompress
           createolddir
-          olddir /var/log/Snort/rotated/logs
+          olddir /var/log/snort/rotated/logs
           }
           EOF
           
           cat > /opt/logrotate.sh << 'EOF'
           /usr/sbin/logrotate -s /var/lib/logrotate/logrotate.status /etc/logrotate.d/Snort
-          for I in $(ls -t /var/log/Snort/log.pcap.* | tail -n +2); do /usr/bin/aws s3 mv $I s3://${SnortPcapBucket}/$(date -d @${!I##*.} +'%Y/%m/%d/%H:%M:%S'.pcap)  --content-type "application/vnd.tcpdump.pcap" --metadata InstanceId=$instance_id; done
+          for I in $(ls -t /var/log/snort/log.pcap.* | tail -n +2); do /usr/bin/aws s3 mv $I s3://${SnortPcapBucket}/$(date -d @${!I##*.} +'%Y/%m/%d/%H:%M:%S'.pcap)  --content-type "application/vnd.tcpdump.pcap" --metadata InstanceId=$instance_id; done
           EOF
 
           chmod +x /opt/logrotate.sh
@@ -601,15 +601,15 @@ Resources:
               "logs_collected": {
                 "files": {
                   "collect_list": [
-                    {"file_path": "/var/log/Snort/eve.json", "log_group_name": "/${AWS::StackName}/Snort/eve"},
-                    {"file_path": "/var/log/Snort/fast.log", "log_group_name": "/${AWS::StackName}/Snort/fast"},
-                    {"file_path": "/var/log/Snort/http.log", "log_group_name": "/${AWS::StackName}/Snort/http"},
-                    {"file_path": "/var/log/Snort/tls.log", "log_group_name": "/${AWS::StackName}/Snort/tls"},
-                    {"file_path": "/var/log/Snort/alert-debug.log", "log_group_name": "/${AWS::StackName}/Snort/alert-debug"},
-                    {"file_path": "/var/log/Snort/stats.log", "log_group_name": "/${AWS::StackName}/Snort/stats"},
-                    {"file_path": "/var/log/Snort/tcp-data.log", "log_group_name": "/${AWS::StackName}/Snort/tcp-data"},
-                    {"file_path": "/var/log/Snort/http-data.log", "log_group_name": "/${AWS::StackName}/Snort/http-data"},
-                    {"file_path": "/var/log/Snort/server.log","log_group_name": "/${AWS::StackName}/Snort/container"}
+                    {"file_path": "/var/log/snort/eve.json", "log_group_name": "/${AWS::StackName}/Snort/eve"},
+                    {"file_path": "/var/log/snort/fast.log", "log_group_name": "/${AWS::StackName}/Snort/fast"},
+                    {"file_path": "/var/log/snort/http.log", "log_group_name": "/${AWS::StackName}/Snort/http"},
+                    {"file_path": "/var/log/snort/tls.log", "log_group_name": "/${AWS::StackName}/Snort/tls"},
+                    {"file_path": "/var/log/snort/alert-debug.log", "log_group_name": "/${AWS::StackName}/Snort/alert-debug"},
+                    {"file_path": "/var/log/snort/stats.log", "log_group_name": "/${AWS::StackName}/Snort/stats"},
+                    {"file_path": "/var/log/snort/tcp-data.log", "log_group_name": "/${AWS::StackName}/Snort/tcp-data"},
+                    {"file_path": "/var/log/snort/http-data.log", "log_group_name": "/${AWS::StackName}/Snort/http-data"},
+                    {"file_path": "/var/log/snort/server.log","log_group_name": "/${AWS::StackName}/Snort/container"}
                   ]
                 }
               }
