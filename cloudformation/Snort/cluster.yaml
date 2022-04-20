@@ -267,65 +267,31 @@ Resources:
           Weight: 1
           CapacityProvider: !Ref SnortCapacityProvider
 
-  SnortTaskDefinition: 
-    Type: AWS::ECS::TaskDefinition
-    Properties:
-      Family: !Sub ${AWS::StackName}-SnortTaskDefinition
-      NetworkMode: host
-      Volumes:
-        - Host: 
-            SourcePath: /var/log/snort/
-          Name: SnortLogs
-      RequiresCompatibilities: 
-        - EC2
-      ContainerDefinitions: 
-        - Name: Snort
-          Image: !Ref SnortImage
-          MemoryReservation: 2048
-          Essential: true
-          # DependsOn:
-          #   - ContainerName: RulesFetcher
-          #     Condition: START
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Sub "/${AWS::StackName}/container/Snort/stdout"
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: "stdout"
-              awslogs-create-group: "true"
-          LinuxParameters:
-            Capabilities:
-              Add:
-              - NET_ADMIN
-              - SYS_NICE
-          MountPoints:
-            - ContainerPath: /var/log/snort
-              SourceVolume: SnortLogs
-          # VolumesFrom:
-          #   - SourceContainer: RulesFetcher
-          #     ReadOnly: True
-          PortMappings: 
-            -  ContainerPort: 80
-        # - Name: RulesFetcher
-        #   Image: !Ref RulesFetcherImage
-        #   MemoryReservation: 128
-        #   Essential: true
-        #   LogConfiguration:
-        #     LogDriver: awslogs
-        #     Options:
-        #       awslogs-group: !Sub "/${AWS::StackName}/container/rulesfetcher/stdout"
-        #       awslogs-region: !Ref AWS::Region
-        #       awslogs-stream-prefix: "stdout"
-        #       awslogs-create-group: "true"
-        #   Environment:
-        #     - Name: RulesetsSsmParameter
-        #       Value: !Sub /${AWS::StackName}/Snort/rulesets
-        #     - Name: MaxMindApiKeySsmParameter
-        #       Value: !Sub /${AWS::StackName}/Snort/maxmindapikey
-        #     - Name: REGION
-        #       Value: !Ref AWS::Region
-        #     - Name: DynamicRulesS3Path
-        #       Value: !Ref DynamicRulesS3Path
+  SnortTaskDefinition:
+  Type: AWS::ECS::TaskDefinition
+      Properties: 
+        Family: !Sub ${AWS::StackName}-SnortTaskDefinition
+        NetworkMode: host
+        RequiresCompatibilities:
+          - "EC2"
+        ContainerDefinitions: 
+          - 
+            Name: "Snort"
+            MountPoints: 
+              - 
+                SourceVolume: "SnortLogs"
+                ContainerPath: "/var/log/snort"
+            Image: !Ref SnortImage
+            EntryPoint: 
+              - "/usr/local/bin/snort"
+              - "--daq gwlb --daq-dir=/usr/local/lib/daq -i eth0"
+            Memory: 2048
+            Essential: true
+        Volumes: 
+          - 
+            Host: 
+              SourcePath: "/var/log/snort/"
+            Name: "SnortLogs"
 
   SnortScalableTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget

@@ -11,9 +11,8 @@ RUN mkdir /packages
 RUN yum -y  install flex bison gcc gcc-c++ make cmake3 automake autoconf libtool
 RUN cd /work && git clone https://github.com/ofalk/libdnet.git libdnet
 RUN cd /work/libdnet && ./configure && make && make install
-RUN yum -y  install libpcap-devel pcre-devel hwloc-devel openssl-devel zlib-devel luajit-devel pkgconf libmnl-devel libunwind-devel
-
-
+RUN yum -y  install libpcap-devel pcre-devel hwloc-devel openssl-devel zlib-devel pkgconf libmnl-devel libunwind-devel
+RUN yum -y install g++ hwloc openssl libpcap pcre luajit libuuid uuid-devel pkgconf-pkg-config zlib
 RUN cd /work && git clone https://github.com/snort3/libdaq.git libdaq
 RUN cd /work/libdaq && ./bootstrap && ./configure && make && make install && ldconfig
 
