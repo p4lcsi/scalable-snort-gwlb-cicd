@@ -285,7 +285,7 @@ Resources:
               - SourceVolume: "SnortLogs"
                 ContainerPath: "/var/log/snort"
             Memory: 2048
-            Essential: false
+            Essential: true
 
   SnortScalableTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
