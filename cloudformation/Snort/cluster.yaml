@@ -284,11 +284,8 @@ Resources:
             MountPoints: 
               - SourceVolume: "SnortLogs"
                 ContainerPath: "/var/log/snort"
-            EntryPoint: 
-              - "/usr/local/bin/snort"
-              - "--daq gwlb --daq-dir=/usr/local/lib/daq -i eth0"
             Memory: 2048
-            Essential: true
+            Essential: false
 
   SnortScalableTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
