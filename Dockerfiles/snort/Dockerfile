@@ -59,7 +59,7 @@ RUN mkdir /var/log/snort
 RUN chmod -R 5700 /var/log/snort
 RUN chown -R snort:snort /var/log/snort
 
-COPY snort.service /etc/systemd/system/
+COPY docker-entrypoint.sh supervisord.conf /
+RUN yum -y install https://kojipkgs.fedoraproject.org//packages/supervisor/4.2.2/3.el9/noarch/supervisor-4.2.2-3.el9.noarch.rpm
 
-RUN systemctl daemon-reload
-RUN systemctl enable snort.service
+ENTRYPOINT ["/docker-entrypoint.sh"]
