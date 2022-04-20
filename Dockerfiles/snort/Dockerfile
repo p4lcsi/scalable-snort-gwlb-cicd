@@ -12,12 +12,16 @@ RUN yum -y  install flex bison gcc gcc-c++ make cmake3 automake autoconf libtool
 RUN cd /work && git clone https://github.com/ofalk/libdnet.git libdnet
 RUN cd /work/libdnet && ./configure && make && make install
 RUN yum -y  install libpcap-devel pcre-devel hwloc-devel openssl-devel zlib-devel pkgconf libmnl-devel libunwind-devel
-RUN yum -y install g++ hwloc openssl libpcap pcre luajit libuuid uuid-devel pkgconf-pkg-config zlib
+RUN yum -y install g++ hwloc openssl libpcap pcre libuuid uuid-devel pkgconf-pkg-config zlib
+
+RUN cd /work  && git clone https://github.com/LuaJIT/LuaJIT.git luajit
+RUN cd /work/luajit && make && make install
+RUN export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY
+
 RUN cd /work && git clone https://github.com/snort3/libdaq.git libdaq
 RUN cd /work/libdaq && ./bootstrap && ./configure && make && make install && ldconfig
 
 RUN yum -y install xz-devel libuuid-devel
-
 RUN yum -y install cmake3
 RUN yum -y install dnf-plugins-core
 RUN yum -y install wget
