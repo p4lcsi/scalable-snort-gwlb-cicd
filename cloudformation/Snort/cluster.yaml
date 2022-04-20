@@ -268,30 +268,27 @@ Resources:
           CapacityProvider: !Ref SnortCapacityProvider
 
   SnortTaskDefinition:
-  Type: AWS::ECS::TaskDefinition
-      Properties: 
+    Type: AWS::ECS::TaskDefinition
+    Properties: 
         Family: !Sub ${AWS::StackName}-SnortTaskDefinition
         NetworkMode: host
+        Volumes:
+        - Host: 
+            SourcePath: /var/log/snort/
+          Name: SnortLogs
         RequiresCompatibilities:
           - "EC2"
         ContainerDefinitions: 
-          - 
-            Name: "Snort"
-            MountPoints: 
-              - 
-                SourceVolume: "SnortLogs"
-                ContainerPath: "/var/log/snort"
+          - Name: "Snort"
             Image: !Ref SnortImage
+            MountPoints: 
+              - SourceVolume: "SnortLogs"
+                ContainerPath: "/var/log/snort"
             EntryPoint: 
               - "/usr/local/bin/snort"
               - "--daq gwlb --daq-dir=/usr/local/lib/daq -i eth0"
             Memory: 2048
             Essential: true
-        Volumes: 
-          - 
-            Host: 
-              SourcePath: "/var/log/snort/"
-            Name: "SnortLogs"
 
   SnortScalableTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
