@@ -84,28 +84,26 @@ ftp_data = { }
 http_inspect = default_http_inspect
 http2_inspect = { }
 
--- see file_magic.lua for file id rules
+
 file_id = { file_rules = file_magic }
-file_policy = { }
+
+
 
 -- the following require additional configuration to be fully effective:
 
 appid =
 {
     -- appid requires this to use appids in rules
-    --app_detector_dir = 'directory to load appid detectors from'
+    app_detector_dir = '/usr/local/etc/snort/appid/'
 }
 
---[[
-reputation =
+appid_listener =
 {
-    -- configure one or both of these, then uncomment reputation
-    -- (see also related path vars at the top of snort_defaults.lua)
-
-    --blacklist = 'blacklist file name with ip lists'
-    --whitelist = 'whitelist file name with ip lists'
+    json_logging = true,
+    file = "/var/log/snort/appid-output.log",
 }
---]]
+
+reputation = { blocklist = '/usr/local/etc/snort/lists/reputation.blacklist' }
 
 ---------------------------------------------------------------------------
 -- 3. configure bindings
@@ -170,17 +168,12 @@ binder =
 references = default_references
 classifications = default_classifications
 
-ips =
-{
-    -- use this to enable decoder and inspector alerts
-    --enable_builtin_rules = true,
-
-    -- use include for rules files; be sure to set your path
-    -- note that rules files can include other rules files
-    -- (see also related path vars at the top of snort_defaults.lua)
-
+ips = {
+    enable_builtin_rules = true,
+    include = RULE_PATH .. "/snort.rules", 
     variables = default_variables
-}
+    }
+     
 
 -- use these to configure additional rule actions
 -- react = { }
@@ -237,10 +230,37 @@ rate_filter =
 -- you can enable with defaults from the command line with -A <alert_type>
 -- uncomment below to set non-default configs
 --alert_csv = { }
---alert_fast = { }
+alert_json =
+{
+    file = true,
+    limit = 100,
+    fields = 'seconds action class b64_data dir dst_addr dst_ap dst_port eth_dst eth_len \
+    eth_src eth_type gid icmp_code icmp_id icmp_seq icmp_type iface ip_id ip_len msg mpls \
+    pkt_gen pkt_len pkt_num priority proto rev rule service sid src_addr src_ap src_port \
+    target tcp_ack tcp_flags tcp_len tcp_seq tcp_win tos ttl udp_len vlan timestamp',
+}
+alert_fast =
+{
+    file = true
+}
+file_log =
+{
+    log_pkt_time = true,
+    log_sys_time = false
+}
+data_log =
+{
+    key = 'http_request_header_event',
+    limit = 100 
+}
 --alert_full = { }
 --alert_sfsocket = { }
---alert_syslog = { }
+alert_syslog =
+{
+    facility = local7,
+    level = alert,
+    options = pid
+}
 --unified2 = { }
 
 -- packet logging

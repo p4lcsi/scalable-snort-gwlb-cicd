@@ -59,7 +59,31 @@ RUN mkdir /var/log/snort
 RUN chmod -R 5700 /var/log/snort
 RUN chown -R snort:snort /var/log/snort
 
-COPY docker-entrypoint.sh supervisord.conf /
+
+COPY pulledpork.conf /usr/local/etc/pulledpork3/
+
 RUN yum -y install https://kojipkgs.fedoraproject.org//packages/supervisor/4.2.2/3.el9/noarch/supervisor-4.2.2-3.el9.noarch.rpm
+
+
+RUN mkdir -p /usr/local/etc/snort/{builtin_rules,rules,appid,intel,lists}
+RUN cd /work && curl -Lo snort-openappid.tar.gz https://snort.org/downloads/openappid/23020 
+RUN cd /work && tar xf snort-openappid.tar.gz
+RUN cd /work && mv odp/ /usr/local/etc/snort/appid/
+
+RUN touch /usr/local/etc/snort/rules/snort.rules
+RUN touch /usr/local/etc/snort/lists/reputation.blacklist
+
+RUN yum -y install pip
+RUN pip install requests
+
+RUN cd /work && git clone https://github.com/shirkdog/pulledpork3.git
+RUN cd /work/pulledpork3 && mkdir /usr/local/bin/pulledpork3 && cp pulledpork.py /usr/local/bin/pulledpork3/
+RUN cd /work/pulledpork3 && cp -r lib/ /usr/local/bin/pulledpork3
+RUN chmod +x /usr/local/bin/pulledpork3/pulledpork.py
+RUN touch /usr/local/etc/snort/rules/local.rules
+RUN /usr/local/bin/pulledpork3/pulledpork.py -c /usr/local/etc/pulledpork3/pulledpork.conf
+COPY snort.lua snort_defaults.lua /usr/local/etc/snort/
+COPY docker-entrypoint.sh supervisord.conf /
+
 RUN ["chmod", "+x", "/docker-entrypoint.sh"]
-ENTRYPOINT ["sh", "/docker-entrypoint.sh"]
+ENTRYPOINT ["bash", "/docker-entrypoint.sh"]
