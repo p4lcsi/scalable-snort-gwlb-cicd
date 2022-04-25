@@ -90,7 +90,7 @@ RUN touch /var/log/snort/alert_json.txt && chmod 777 /var/log/snort/alert_json.t
 RUN touch /var/log/snort/appid-output.log && chmod 777  /var/log/snort/appid-output.log
 RUN touch /var/log/snort/data_log && chmod 777 /var/log/snort/data_log
 RUN touch /var/log/snort/file.log && chmod 777 /var/log/snort/file.log
-
+RUN touch /var/log/snort/alert_csv.txt && chmod 777 /var/log/snort/alert_csv.txt
 
 RUN ["chmod", "+x", "/docker-entrypoint.sh"]
 ENTRYPOINT ["bash", "/docker-entrypoint.sh"]
