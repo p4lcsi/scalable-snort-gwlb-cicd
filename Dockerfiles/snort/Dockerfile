@@ -85,5 +85,12 @@ RUN /usr/local/bin/pulledpork3/pulledpork.py -c /usr/local/etc/pulledpork3/pulle
 COPY snort.lua snort_defaults.lua /usr/local/etc/snort/
 COPY docker-entrypoint.sh supervisord.conf /
 
+RUN touch /var/log/snort/alert_fast.txt && chmod 777 /var/log/snort/alert_fast.txt
+RUN touch /var/log/snort/alert_json.txt && chmod 777 /var/log/snort/alert_json.txt
+RUN touch /var/log/snort/appid-output.log && chmod 777  /var/log/snort/appid-output.log
+RUN touch /var/log/snort/data_log && chmod 777 /var/log/snort/data_log
+RUN touch /var/log/snort/file.log && chmod 777 /var/log/snort/file.log
+
+
 RUN ["chmod", "+x", "/docker-entrypoint.sh"]
 ENTRYPOINT ["bash", "/docker-entrypoint.sh"]

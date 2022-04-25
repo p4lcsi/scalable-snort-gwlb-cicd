@@ -230,19 +230,8 @@ rate_filter =
 -- you can enable with defaults from the command line with -A <alert_type>
 -- uncomment below to set non-default configs
 --alert_csv = { }
-alert_json =
-{
-    file = true,
-    limit = 100,
-    fields = 'seconds action class b64_data dir dst_addr dst_ap dst_port eth_dst eth_len \
-    eth_src eth_type gid icmp_code icmp_id icmp_seq icmp_type iface ip_id ip_len msg mpls \
-    pkt_gen pkt_len pkt_num priority proto rev rule service sid src_addr src_ap src_port \
-    target tcp_ack tcp_flags tcp_len tcp_seq tcp_win tos ttl udp_len vlan timestamp',
-}
-alert_fast =
-{
-    file = true
-}
+
+
 file_log =
 {
     log_pkt_time = true,
