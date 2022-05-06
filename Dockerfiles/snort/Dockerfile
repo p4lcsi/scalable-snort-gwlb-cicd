@@ -53,8 +53,8 @@ RUN export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY
 RUN export LUAJIT_INCLUDE_DIR=/usr/local/lib/
 RUN ln -sf /usr/local/bin/luajit-2.1.0-beta3 /usr/local/bin/luajit
 
-RUN groupadd --gid 1000 snort
-RUN useradd snort -r -M -g snort -s --gid 1000 --uid 1000 /sbin/nologin -c SNORT_SERVICE_ACCOUNT
+RUN groupadd --gid 1001 snort
+RUN useradd snort -r -M -g 1001 -u 1001 -s  /sbin/nologin -c SNORT_SERVICE_ACCOUNT
 RUN mkdir /var/log/snort
 RUN touch /var/log/snort/alert_fast.txt
 RUN touch /var/log/snort/alert_json.txt
