@@ -66,7 +66,6 @@ RUN chown -R snort:snort /var/log/snort
 RUN chmod -R 5700 /var/log/snort
 
 
-COPY local.rules /usr/local/etc/snort/rules/
 COPY pulledpork.conf /usr/local/etc/pulledpork3/
 
 RUN yum -y install https://kojipkgs.fedoraproject.org//packages/supervisor/4.2.2/3.el9/noarch/supervisor-4.2.2-3.el9.noarch.rpm
@@ -87,11 +86,10 @@ RUN cd /work && git clone https://github.com/shirkdog/pulledpork3.git
 RUN cd /work/pulledpork3 && mkdir /usr/local/bin/pulledpork3 && cp pulledpork.py /usr/local/bin/pulledpork3/
 RUN cd /work/pulledpork3 && cp -r lib/ /usr/local/bin/pulledpork3
 RUN chmod +x /usr/local/bin/pulledpork3/pulledpork.py
-RUN touch /usr/local/etc/snort/rules/local.rules
 RUN /usr/local/bin/pulledpork3/pulledpork.py -c /usr/local/etc/pulledpork3/pulledpork.conf
 COPY snort.lua snort_defaults.lua /usr/local/etc/snort/
 COPY docker-entrypoint.sh supervisord.conf /
-
+COPY local.rules /usr/local/etc/snort/rules/
 
 
 RUN ["chmod", "+x", "/docker-entrypoint.sh"]
