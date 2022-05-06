@@ -53,13 +53,20 @@ RUN export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY
 RUN export LUAJIT_INCLUDE_DIR=/usr/local/lib/
 RUN ln -sf /usr/local/bin/luajit-2.1.0-beta3 /usr/local/bin/luajit
 
-RUN groupadd snort
-RUN useradd snort -r -M -g snort -s /sbin/nologin -c SNORT_SERVICE_ACCOUNT
+RUN groupadd --gid 1000 snort
+RUN useradd snort -r -M -g snort -s --gid 1000 --uid 1000 /sbin/nologin -c SNORT_SERVICE_ACCOUNT
 RUN mkdir /var/log/snort
-RUN chmod -R 5700 /var/log/snort
+RUN touch /var/log/snort/alert_fast.txt
+RUN touch /var/log/snort/alert_json.txt
+RUN touch /var/log/snort/appid-output.log
+RUN touch /var/log/snort/data_log
+RUN touch /var/log/snort/file.log
+RUN touch /var/log/snort/alert_csv.txt
 RUN chown -R snort:snort /var/log/snort
+RUN chmod -R 5700 /var/log/snort
 
 
+COPY local.rules /usr/local/etc/snort/rules/
 COPY pulledpork.conf /usr/local/etc/pulledpork3/
 
 RUN yum -y install https://kojipkgs.fedoraproject.org//packages/supervisor/4.2.2/3.el9/noarch/supervisor-4.2.2-3.el9.noarch.rpm
@@ -85,12 +92,7 @@ RUN /usr/local/bin/pulledpork3/pulledpork.py -c /usr/local/etc/pulledpork3/pulle
 COPY snort.lua snort_defaults.lua /usr/local/etc/snort/
 COPY docker-entrypoint.sh supervisord.conf /
 
-RUN touch /var/log/snort/alert_fast.txt && chmod 777 /var/log/snort/alert_fast.txt
-RUN touch /var/log/snort/alert_json.txt && chmod 777 /var/log/snort/alert_json.txt
-RUN touch /var/log/snort/appid-output.log && chmod 777  /var/log/snort/appid-output.log
-RUN touch /var/log/snort/data_log && chmod 777 /var/log/snort/data_log
-RUN touch /var/log/snort/file.log && chmod 777 /var/log/snort/file.log
-RUN touch /var/log/snort/alert_csv.txt && chmod 777 /var/log/snort/alert_csv.txt
+
 
 RUN ["chmod", "+x", "/docker-entrypoint.sh"]
 ENTRYPOINT ["bash", "/docker-entrypoint.sh"]
