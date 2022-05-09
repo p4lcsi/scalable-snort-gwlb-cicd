@@ -8,7 +8,7 @@ RUN echo " /usr/local/lib64" >> "/etc/ld.so.conf.d/local.conf"
 RUN ldconfig
 RUN mkdir /work 
 RUN mkdir /packages 
-RUN yum -y  install flex bison gcc gcc-c++ make cmake3 automake autoconf libtool
+RUN yum -y  install flex bison gcc gcc-c++ make cmake3 automake autoconf libtool diffutils check check-devel
 RUN cd /work && git clone https://github.com/ofalk/libdnet.git libdnet
 RUN cd /work/libdnet && ./configure && make && make install
 RUN yum -y  install libpcap-devel pcre-devel hwloc-devel openssl-devel zlib-devel pkgconf libmnl-devel libunwind-devel
@@ -62,6 +62,7 @@ RUN touch /var/log/snort/appid-output.log
 RUN touch /var/log/snort/data_log
 RUN touch /var/log/snort/file.log
 RUN touch /var/log/snort/alert_csv.txt
+RUN touch /var/log/snort/snort.pid
 RUN chown -R snort:snort /var/log/snort
 RUN chmod -R 5700 /var/log/snort
 
@@ -86,11 +87,10 @@ RUN cd /work && git clone https://github.com/shirkdog/pulledpork3.git
 RUN cd /work/pulledpork3 && mkdir /usr/local/bin/pulledpork3 && cp pulledpork.py /usr/local/bin/pulledpork3/
 RUN cd /work/pulledpork3 && cp -r lib/ /usr/local/bin/pulledpork3
 RUN chmod +x /usr/local/bin/pulledpork3/pulledpork.py
-RUN /usr/local/bin/pulledpork3/pulledpork.py -c /usr/local/etc/pulledpork3/pulledpork.conf
 COPY snort.lua snort_defaults.lua /usr/local/etc/snort/
 COPY docker-entrypoint.sh supervisord.conf /
 COPY local.rules /usr/local/etc/snort/rules/
 
-
 RUN ["chmod", "+x", "/docker-entrypoint.sh"]
+RUN ["chown", "-R", "snort:snort", "/var/log/snort"]
 ENTRYPOINT ["bash", "/docker-entrypoint.sh"]
