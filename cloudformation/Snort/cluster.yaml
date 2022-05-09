@@ -26,7 +26,7 @@ Parameters:
     Type: Number
 
   DefaultLogRententionCloudWatch:
-    Description: "How many days Fast log should be saved in Cloudwatch"
+    Description: "How many days snort3 logs should be saved in Cloudwatch"
     Default: 3
     Type: Number
     AllowedValues: [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]
@@ -114,26 +114,26 @@ Resources:
 ##
 ## Monitoring - this will change based on snort. Need to understand snort logging
 ##
-  # SnortEveLogGroup:
-  #   Type: AWS::Logs::LogGroup
-  #   Properties: 
-  #     LogGroupName: !Sub /${AWS::StackName}/Snort/eve
-  #     RetentionInDays: !Ref EveLogRententionCloudWatch
-  # SnortFastLogGroup:
-  #   Type: AWS::Logs::LogGroup
-  #   Properties: 
-  #     LogGroupName: !Sub /${AWS::StackName}/Snort/fast
-  #     RetentionInDays: !Ref DefaultLogRententionCloudWatch
-  # SnortHttpLogGroup:
-  #   Type: AWS::Logs::LogGroup
-  #   Properties: 
-  #     LogGroupName: !Sub /${AWS::StackName}/Snort/http
-  #     RetentionInDays: !Ref DefaultLogRententionCloudWatch
-  # SnortTlsLogGroup:
-  #   Type: AWS::Logs::LogGroup
-  #   Properties: 
-  #     LogGroupName: !Sub /${AWS::StackName}/Snort/tls
-  #     RetentionInDays: !Ref DefaultLogRententionCloudWatch
+  SnortFileLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties: 
+      LogGroupName: !Sub /${AWS::StackName}/Snort/FileLogs
+      RetentionInDays: !Ref DefaultLogRententionCloudWatch
+  SnortDataLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties: 
+      LogGroupName: !Sub /${AWS::StackName}/Snort/Data_log
+      RetentionInDays: !Ref DefaultLogRententionCloudWatch
+  SnortAppIDLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties: 
+      LogGroupName: !Sub /${AWS::StackName}/Snort/appid
+      RetentionInDays: !Ref DefaultLogRententionCloudWatch
+  SnortAlertCSVLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties: 
+      LogGroupName: !Sub /${AWS::StackName}/Snort/alert_csv
+      RetentionInDays: !Ref DefaultLogRententionCloudWatch
   # SnortAlertDebugLogGroup:
   #   Type: AWS::Logs::LogGroup
   #   Properties: 
@@ -149,7 +149,7 @@ Resources:
   #   Properties: 
   #     LogGroupName: !Sub /${AWS::StackName}/Snort/tcp-data
   #     RetentionInDays: !Ref DefaultLogRententionCloudWatch
-  #SnortHttpDataLogGroup:
+  # SnortHttpDataLogGroup:
   #  Type: AWS::Logs::LogGroup
   #  Properties: 
   #    LogGroupName: !Sub /${AWS::StackName}/Snort/http-data
@@ -528,7 +528,7 @@ Resources:
           # LOGROTATE CONFIGURATION #
           ###########################
           cat > /etc/logrotate.d/snort << 'EOF'
-          /var/log/snort/*.log /var/log/snort/eve.json {
+          /var/log/snort/*.log /var/log/snort/*.txt /var/log/snort/data_log* {
           rotate 2
           daily
           size 200M
@@ -561,15 +561,10 @@ Resources:
               "logs_collected": {
                 "files": {
                   "collect_list": [
-                    {"file_path": "/var/log/snort/eve.json", "log_group_name": "/${AWS::StackName}/Snort/eve"},
-                    {"file_path": "/var/log/snort/fast.log", "log_group_name": "/${AWS::StackName}/Snort/fast"},
-                    {"file_path": "/var/log/snort/http.log", "log_group_name": "/${AWS::StackName}/Snort/http"},
-                    {"file_path": "/var/log/snort/tls.log", "log_group_name": "/${AWS::StackName}/Snort/tls"},
-                    {"file_path": "/var/log/snort/alert-debug.log", "log_group_name": "/${AWS::StackName}/Snort/alert-debug"},
-                    {"file_path": "/var/log/snort/stats.log", "log_group_name": "/${AWS::StackName}/Snort/stats"},
-                    {"file_path": "/var/log/snort/tcp-data.log", "log_group_name": "/${AWS::StackName}/Snort/tcp-data"},
-                    {"file_path": "/var/log/snort/http-data.log", "log_group_name": "/${AWS::StackName}/Snort/http-data"},
-                    {"file_path": "/var/log/snort/server.log","log_group_name": "/${AWS::StackName}/Snort/container"}
+                    {"file_path": "/var/log/snort/file.log", "log_group_name": "/${AWS::StackName}/Snort/Filelogs"},
+                    {"file_path": "/var/log/snort/data_log", "log_group_name": "/${AWS::StackName}/Snort/data_log"},
+                    {"file_path": "/var/log/snort/appid-output.log", "log_group_name": "/${AWS::StackName}/Snort/appid"},
+                    {"file_path": "/var/log/snort/alert_csv.txt", "log_group_name": "/${AWS::StackName}/Snort/alert_csv"}
                   ]
                 }
               }
