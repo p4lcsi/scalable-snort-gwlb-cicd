@@ -66,7 +66,7 @@ Parameters:
     Description: >
       Oinkcodes are unique keys associated to your snort3 user account. The oinkcode acts as an api key for downloading rule packages. Please enter your unique oinkcode from your snort.org user account
     Type: String
-  HOME_NET:
+  HOMENET:
     Description: >
       Enter the CIDR range of the network you would like to protect. For example, to protect egress traffic from a VPC with CIDR, 10.0.0.0/16, enter 10.0.0.0/16
     Type: String
@@ -192,7 +192,7 @@ Resources:
           GitRepo: !Ref GitRepo
           s3Bucket: !Ref SnortBucket
           oinkcode: !Ref Oinkcode
-          homenet: !Ref HOME_NET
+          homenet: !Ref HOMENET
       Handler: index.lambda_handler
       Runtime: python3.8
       Timeout: 900
