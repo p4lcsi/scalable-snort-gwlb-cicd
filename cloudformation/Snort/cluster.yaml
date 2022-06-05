@@ -284,9 +284,21 @@ Resources:
             MountPoints: 
               - SourceVolume: "SnortLogs"
                 ContainerPath: "/var/log/snort"
-            Memory: 2048
+            MemoryReservation: 2048
             Essential: true
-
+            LogConfiguration:
+              LogDriver: awslogs
+              Options:
+                awslogs-group: !Sub "/${AWS::StackName}/container/snort/stdout"
+                awslogs-region: !Ref AWS::Region
+                awslogs-stream-prefix: "stdout"
+                awslogs-create-group: "true"
+            LinuxParameters:
+              Capabilities:
+                Add:
+                - NET_ADMIN
+                - SYS_NICE
+              
   SnortScalableTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     Properties:
@@ -555,13 +567,13 @@ Resources:
           {
             "agent": {
               "metrics_collection_interval": 60,
-              "run_as_user": "cwagent"
+              "run_as_user": "ssm-user"
             },
             "logs": {
               "logs_collected": {
                 "files": {
                   "collect_list": [
-                    {"file_path": "/var/log/snort/file.log", "log_group_name": "/${AWS::StackName}/Snort/Filelogs"},
+                    {"file_path": "/var/log/snort/file.log", "log_group_name": "/${AWS::StackName}/Snort/FileLogs"},
                     {"file_path": "/var/log/snort/data_log", "log_group_name": "/${AWS::StackName}/Snort/data_log"},
                     {"file_path": "/var/log/snort/appid-output.log", "log_group_name": "/${AWS::StackName}/Snort/appid"},
                     {"file_path": "/var/log/snort/alert_csv.txt", "log_group_name": "/${AWS::StackName}/Snort/alert_csv"}
