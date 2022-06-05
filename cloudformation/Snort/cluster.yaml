@@ -522,7 +522,7 @@ Resources:
           mkdir -p /mnt/efs/$instance_id/snort
 
           ln -s /mnt/efs/$instance_id/snort /var/log/
-          chown 1000 /var/log/snort/ #Make the Snort user the owner of the log folder.
+          chown 1001 /var/log/snort/ #Make the Snort user the owner of the log folder.
 
           ###########################
           # LOGROTATE CONFIGURATION #
