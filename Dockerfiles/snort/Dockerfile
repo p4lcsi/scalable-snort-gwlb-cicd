@@ -29,9 +29,6 @@ RUN ln -s /usr/lib64/pkgconfig/safec-3.3.pc /usr/lib64/pkgconfig/libsafec.pc
 
 RUN yum -y  install gperftools-devel
 
-COPY daq_gwlb.zip /work/daq_gwlb.zip 
-RUN yum -y  install unzip
-RUN cd /work && unzip daq_gwlb.zip && cd daq_gwlb-master && make && cp daq_gwlb.so /usr/local/lib/daq/. 
 RUN cd /work && git clone https://github.com/snort3/snort3.git snort3_latest
 RUN export CFLAGS="-O3"
 RUN export CXXFLAGS="-O3 -fno-rtti"
