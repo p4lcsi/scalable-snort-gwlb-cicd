@@ -189,16 +189,14 @@ ips = {
 -- below are examples of filters
 -- each table is a list of records
 
---[[
+
 suppress =
 {
     -- don't want to any of see these
-    { gid = 1, sid = 1 },
+    { gid = 116, sid = 6 }
 
-    -- don't want to see these for a given server
-    { gid = 1, sid = 2, track = 'by_dst', ip = '1.2.3.4' },
 }
---]]
+
 
 --[[
 event_filter =
@@ -229,7 +227,11 @@ rate_filter =
 -- event logging
 -- you can enable with defaults from the command line with -A <alert_type>
 -- uncomment below to set non-default configs
-alert_csv = { file = true }
+alert_csv =
+{
+        fields = 'timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule msg',
+        file = true
+}
 
 
 file_log =
