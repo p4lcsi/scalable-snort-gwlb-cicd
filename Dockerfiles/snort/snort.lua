@@ -21,7 +21,7 @@
 
 -- HOME_NET and EXTERNAL_NET must be set now
 -- setup the network addresses you are protecting
-HOME_NET = '10.0.0.0/16'
+HOME_NET = '172.16.0.0/16'
 
 -- set up the external network addresses.
 -- (leave as "any" in most situations)
@@ -170,7 +170,11 @@ classifications = default_classifications
 
 ips = {
     enable_builtin_rules = true,
-    include = RULE_PATH .. "/snort.rules", 
+    rules = [[
+
+        include /usr/local/etc/snort/rules/snort.rules
+        include /usr/local/etc/snort/rules/local.rules
+    ]],
     variables = default_variables
     }
      
