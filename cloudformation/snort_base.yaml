@@ -167,11 +167,10 @@ Resources:
                       for line in lines:
                           pulledpork.conf.write(re.sub(r'^oinkcode = .*', 'oinkcode = ' + oinkcode, line))
                   logger.info('writing homenet ' + homenet + ' to cloned-repo/Dockerfiles/snort/snort.lua')
-                  with open("cloned-repo/Dockerfiles/snort/snort.lua", "r") as snort:
+                  with open("cloned-repo/Dockerfiles/snort/snort.lua", "r+") as snort:
                       lines = snort.readlines()
-                  with open("cloned-repo/Dockerfiles/snort/.snort.lua", "w") as snort.lua:
                       for line in lines:
-                          snort.lua.write(re.sub(r"^HOME_NET = .*", "HOME_NET = " + "'" + homenet + "'", line))
+                          snort.write(re.sub(r"^HOME_NET = .*", "HOME_NET = " + "'" + homenet + "'", line))
                   logger.info('Create Zip from repo')
                   shutil.make_archive(s3ObjectName, s3ObjectExtension,'cloned-repo','.')
                   logger.info('Created zip from repo. Files in working directory:')

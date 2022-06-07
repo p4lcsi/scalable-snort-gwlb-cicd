@@ -31,40 +31,10 @@ Parameters:
     Type: Number
     AllowedValues: [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]
 
-#  EveLogRententionCloudWatch:
-#    Description: "How many days EVE log should be saved in Cloudwatch"
-#    Default: 30
-#    Type: Number
-#    AllowedValues: [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]
-
   SnortImage:
     Description: Container image
     Type: String
     Default: ""
-
-#  RulesFetcherImage:
-#    Description: Container image
-#    Type: String
-#    Default: ""
-
-#  DynamicRulesS3Path:
-#    Description: S3 Path to dynamic.rules
-#    Type: String
-#    Default: ""
-  
-  #Suricata rules can be referrenced from an index.yaml file. Need to better understand how snort rules are packaged and consumed. One approach is to point to a default version that gets unpackaged.
-  # SnortRulesets:
-  #   Description: |
-  #     Specify a community or registered ruleset name from https://www.snort.org/downloads in a comma delimtted list
-  #   #Enable rulesets from the following index: https://www.openinfosecfoundation.org/rules/index.yaml in a comma delimted list. 
-  #   #Example: et/open, sslbl/ssl-fp-blacklist, et/pro secret-code=password, etnetera/aggressive
-  #   Type: String
-  #   Default: ""
-    
-  # MaxMindApiKey:
-  #   Description: Your MaxMind API key to download the GeoLite Database. https://dev.maxmind.com/geoip/geolite2-free-geolocation-data 
-  #   Type: String
-  #   Default: ""
 
   SnortInstanceType:
     Type: String
@@ -85,35 +55,7 @@ Parameters:
     Type: String
     Default: 80.0
 
-
-# Conditions:
-# # Remove
-#   HasSnortRulesets:
-#     !Not [!Equals [!Ref SnortRulesets, ""]]
-#   HasMaxMindApiKey:
-#     !Not [!Equals [!Ref MaxMindApiKey, ""]]
-
 Resources:
-  #Remove
-  # SnortRulesetsParameter:
-  #   Condition: HasSnortRulesets
-  #   Type: AWS::SSM::Parameter
-  #   Properties:
-  #     Name: !Sub /${AWS::StackName}/Snort/rulesets
-  #     Type:  String
-  #     Value: !Ref SnortRulesets
-  # #Remove
-  # MaxMindApiKeyParameter:
-  #   Condition: HasMaxMindApiKey
-  #   Type: AWS::SSM::Parameter
-  #   Properties:
-  #     Name: !Sub /${AWS::StackName}/Snort/maxmindapikey
-  #     Type:  String
-  #     Value: !Ref MaxMindApiKey
-
-##
-## Monitoring - this will change based on snort. Need to understand snort logging
-##
   SnortFileLogGroup:
     Type: AWS::Logs::LogGroup
     Properties: 
@@ -134,26 +76,6 @@ Resources:
     Properties: 
       LogGroupName: !Sub /${AWS::StackName}/Snort/alert_csv
       RetentionInDays: !Ref DefaultLogRententionCloudWatch
-  # SnortAlertDebugLogGroup:
-  #   Type: AWS::Logs::LogGroup
-  #   Properties: 
-  #     LogGroupName: !Sub /${AWS::StackName}/Snort/alert-debug
-  #     RetentionInDays: !Ref DefaultLogRententionCloudWatch
-  # SnortStatsLogGroup:
-  #   Type: AWS::Logs::LogGroup
-  #   Properties: 
-  #     LogGroupName: !Sub /${AWS::StackName}/Snort/stats
-  #     RetentionInDays: !Ref DefaultLogRententionCloudWatch
-  # SnortTcpDataLogGroup:
-  #   Type: AWS::Logs::LogGroup
-  #   Properties: 
-  #     LogGroupName: !Sub /${AWS::StackName}/Snort/tcp-data
-  #     RetentionInDays: !Ref DefaultLogRententionCloudWatch
-  # SnortHttpDataLogGroup:
-  #  Type: AWS::Logs::LogGroup
-  #  Properties: 
-  #    LogGroupName: !Sub /${AWS::StackName}/Snort/http-data
-  #    RetentionInDays: !Ref DefaultLogRententionCloudWatch
           
   SnortPcapBucket:
     Type: AWS::S3::Bucket
@@ -433,10 +355,6 @@ Resources:
                 Action:
                   - s3:PutObject
                 Resource: !Sub ${SnortPcapBucket.Arn}/*
-              # - Effect: Allow
-              #   Action:
-              #     - s3:GetObject
-              #   Resource: !Sub arn:aws:s3:::${DynamicRulesS3Path}
               - Effect: Allow
                 Action:
                   - ssm:GetParameters
@@ -462,7 +380,6 @@ Resources:
       Roles:
         - !Ref SnortEcsInstanceRole
   
-  #May need to modify if we go with non-linux base
   SnortLaunchConfiguration:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
