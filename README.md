@@ -1,8 +1,8 @@
-# Building a Scalable Open-Source IPS/IDS Platform Powered by Snort3 and Amazon
+# Building a Scalable Open-Source IPS/IDS Platform Powered by Snort3 and Amazon Web Services
 
-This repository has deployment, installation and clean up instructions on how to deploy and manage Snort3 in AWS with Elastic Container Services and Gateway Load balancer. The solution will deploy Snort3 on ECS and provides an opportunity to adjust the Snort configuration and rulesets using a GitOps workflow.
+This repository has deployment, installation and clean up instructions on how to deploy and manage Snort3 in AWS with Elastic Container Services and Gateway Load balancer. The solution will deploy Snort3 on Amazon ECS and provides controls to adjust the Snort configuration and rulesets using a GitOps-based workflow.
 
-This Snort3 deployment can then be used as a target for Gateway Load Balancer in a [distributed](https://aws.amazon.com/blogs/networking-and-content-delivery/scaling-network-traffic-inspection-using-aws-gateway-load-balancer/) or [centralized](https://aws.amazon.com/blogs/networking-and-content-delivery/centralized-inspection-architecture-with-aws-gateway-load-balancer-and-aws-transit-gateway/) architecture to be able to have Snort3 as a scalable network security appliance.
+This Snort3 deployment can then be used as a target for Gateway Load Balancer in a [distributed](https://aws.amazon.com/blogs/networking-and-content-delivery/scaling-network-traffic-inspection-using-aws-gateway-load-balancer/) or [centralized](https://aws.amazon.com/blogs/networking-and-content-delivery/centralized-inspection-architecture-with-aws-gateway-load-balancer-and-aws-transit-gateway/) architecture to use Cisco Snort3 as a scalable, open-source network security IPS/IDS solution.
 
 ## How to deploy
 ### Quickstart
@@ -12,7 +12,7 @@ The [snort_base.yaml](cloudformation/snort_base.yaml) template will setup a new 
 
 
 ### Use Snort3 for network inspection
-After you have deployed the above cloudformation template you would need to create and setup Gateway Load balancer VPC Endpoints so the Snort3 containers can be used to Inspect your networking traffic. There are plenty of documentations on setting up the endpoints, and configuring the route tables. The Snort 3 containers will be inline and actively inspecting the traffic. In case if you would like to change this behaviour and have IDS (detection only mode) - you need to edit the [supervisord.conf](Dockerfiles/snort/supervisord.conf) and replace the "-Q" parameter to "-v" for passive mode under the [program:snort3] command section.
+After you have deployed the above cloudformation template you simply need to create [Gateway Load balancer Endpoints](https://docs.aws.amazon.com/elasticloadbalancing/latest/gateway/getting-started.html#create-endpoint) and point your workload [route table](https://docs.aws.amazon.com/elasticloadbalancing/latest/gateway/getting-started.html#configure-routing) to those GWLB-endpoints so the Snort3 containers can be used to inspect your networking traffic. In case if you would like to change this behaviour and have IDS (detection only mode) - you need to edit the [supervisord.conf](Dockerfiles/snort/supervisord.conf) and replace the "-Q" parameter to "-v" for passive mode under the [program:snort3] command section.
 
 1. [North-South inspection](https://d1.awsstatic.com/architecture-diagrams/ArchitectureDiagrams/gateway-load-balancer-inspection-north-south-ra.pdf)
 2. [East-West inspection](https://d1.awsstatic.com/architecture-diagrams/ArchitectureDiagrams/gateway-load-balancer-inspection-east-west-ra.pdf)
@@ -21,7 +21,7 @@ After you have deployed the above cloudformation template you would need to crea
 
 **How can I add my own rules?**
 
-1. [Connect to your CodeCommit repository](https://docs.aws.amazon.com/codecommit/latest/userguide/how-to-connect.html) via some dev environment (I would recommend VSCode)
+1. Connect your development environment such as VSCode to your [CodeCommit repository](https://docs.aws.amazon.com/codecommit/latest/userguide/how-to-connect.html) 
 2. Open the [local.rules](Dockerfiles/snort/local.rules)
 3. Add a new custom rule in a new line based on snort3 rule format as per [Rule Writers Guide to Snort3](https://snort-org-site.s3.amazonaws.com/production/document_files/files/000/000/596/original/Rules_Writers_Guide_to_Snort_3_Rules.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAU7AK5ITMJQBJPARJ%2F20220610%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20220610T081428Z&X-Amz-Expires=172800&X-Amz-SignedHeaders=host&X-Amz-Signature=683a042437f9d2bf054799210cadb28c67f96580fdc6b8490280417e3c89eadb)
 4. Once you've created your new rule - save and commit to the CodeCommit repository - which will kick-off a codepipeline process - and the new rule file will be deployed in couple of minutes to your environment.
@@ -51,11 +51,11 @@ All the log files are stored under "/var/log/snort/" folder in the container and
 data_log = { key = 'http_raw_uri' } - in the basic configuration we've subscribed to the HTTP Request Header events("http_request_header_event")
 
 
-You can disable these logs or enable other logs by editing the [Snort3 config](Dockerfiles/snort/snort.lua). If you will enable new logging methods you might need to configure the Cloudwatch Agent to pickup the new logs. The Cloudwatch Agent is configured in the [cluster.yaml](cloudformation/snort/cluster.yaml) - search for: "CLOUDWATCH AGENT" section.
+You can disable these logs or enable other logs by editing the [Snort3 config](Dockerfiles/snort/snort.lua). If you will enable new logging methods you might need to configure the Cloudwatch Agent to pickup the new logs. The Cloudwatch Agent is configured in the [cluster.yaml](cloudformation/snort/cluster.yaml) in the "CLOUDWATCH AGENT" section.
 
-The stdout from the Snort3 is also logging to CloudWatch Logs per default. 
+In addition, the stdout logs from the Snort3 container are also sent to CloudWatch Logs per default. 
 
 **Does Snort3 scale automatically?**
 
-ECS Autoscaling is enabled for CPU. When the clusters average CPU goes over 80% (configurable) a new ECS task (a Snort3 container) is started. Scale-in is enabled, so if your traffic pattern is changing alot you will see ECS tasks (Snort3 containers) come and go.
+ECS Autoscaling is enabled for CPU. When the clusters average CPU goes over 80% (configurable) a new ECS task (a Snort3 container) is started. Scale-in is enabled, so if your traffic pattern is changing alot you will see ECS tasks (Snort3 containers) come and go. You can configure the scaling parameters by modifyin the following json [config file](https://github.com/p4lcsi/scalable-snort-gwlb-cicd/blob/main/cloudformation/Snort/cluster-template-configuration.json) and committing it to the codecommit repository
 Gateway Load Balancer will add the new ECS tasks as targets, however existing flows will still go to their old targets so we recommend that you tweak the scaling parameters, configuration and metrics to fit your environment. For example, if you have lots of long-lasting flows, you might want to disable automatic scale-in.
