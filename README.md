@@ -12,7 +12,7 @@ The [snort_base.yaml](cloudformation/snort_base.yaml) template will setup a new 
 
 
 ### Use Snort3 for network inspection
-After you have deployed the above cloudformation template you would need to create and setup Gateway Load balancer VPC Endpoints so the Snort3 containers can be used to Inspect your networking traffic. There are plenty of documentations on setting up the endpoints, and configuring the route tables. The Snort 3 containers will be inline and actively inspecting the traffic. In case if you would like to change this behaviour and have IDS (detection only mode) - you need to edit the [snort.lua](Dockerfiles/snort/supervisord.conf) and replace the "-Q" parameter to "-v" for passive mode under the [program:snort3] command section.
+After you have deployed the above cloudformation template you would need to create and setup Gateway Load balancer VPC Endpoints so the Snort3 containers can be used to Inspect your networking traffic. There are plenty of documentations on setting up the endpoints, and configuring the route tables. The Snort 3 containers will be inline and actively inspecting the traffic. In case if you would like to change this behaviour and have IDS (detection only mode) - you need to edit the [supervisord.conf](Dockerfiles/snort/supervisord.conf) and replace the "-Q" parameter to "-v" for passive mode under the [program:snort3] command section.
 
 1. [North-South inspection](https://d1.awsstatic.com/architecture-diagrams/ArchitectureDiagrams/gateway-load-balancer-inspection-north-south-ra.pdf)
 2. [East-West inspection](https://d1.awsstatic.com/architecture-diagrams/ArchitectureDiagrams/gateway-load-balancer-inspection-east-west-ra.pdf)
